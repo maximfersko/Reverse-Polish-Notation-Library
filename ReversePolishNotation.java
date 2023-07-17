@@ -61,40 +61,56 @@ public class ReversePolishNotation {
                 .filter(token -> !token.isEmpty())
                 .toArray(String[]::new);
         numbers = new Stack<>();
-        result = new Stack<>(); // Initialize the result stack
+        result = new Stack<>();
 
         StringBuilder rpnExpression = new StringBuilder();
+        Stack<String> stack = new Stack<>();
+
         for (String token : tokens) {
-            Type typeLexeme = getType(token);
-            if (typeLexeme.compareTo(Type.PLUS) >= 0 && typeLexeme.compareTo(Type.LN) <= 0) {
-                while (!result.isEmpty() && getPriority(typeLexeme).compareTo(getPriority(getType(result.peek()))) <= 0) {
-                    rpnExpression.append(result.pop()).append(" ");
+            if (token.equals("(")) {
+                stack.push(token);
+            } else if (token.equals(")")) {
+                while (!stack.isEmpty() && !stack.peek().equals("(")) {
+                    rpnExpression.append(stack.pop()).append(" ");
                 }
-                result.push(token);
-            } else if (typeLexeme.equals(Type.NUMBER) || typeLexeme.equals(Type.X)) {
-                rpnExpression.append(token).append(" ");
-            } else if (typeLexeme.equals(Type.OPEN_BRACKET)) {
-                result.push(token);
-            } else if (typeLexeme.equals(Type.CLOSE_BRACKET)) {
-                while (!result.isEmpty() && !getType(result.peek()).equals(Type.OPEN_BRACKET)) {
-                    rpnExpression.append(result.pop()).append(" ");
+                if (!stack.isEmpty() && stack.peek().equals("(")) {
+                    stack.pop();
+                } else {
+                    throw new IllegalArgumentException("Mismatched parentheses in expression");
                 }
-                if (!result.isEmpty() && getType(result.peek()).equals(Type.OPEN_BRACKET)) {
-                    result.pop();
+            } else {
+                Type typeLexeme = getType(token);
+                if (typeLexeme.equals(Type.NUMBER) || typeLexeme.equals(Type.X)) {
+                    rpnExpression.append(token).append(" ");
+                } else if (typeLexeme.equals(Type.POW)) {
+                    while (!stack.isEmpty() && getType(stack.peek()).compareTo(Type.POW) >= 0) {
+                        rpnExpression.append(stack.pop()).append(" ");
+                    }
+                    stack.push(token);
+                } else if (typeLexeme.compareTo(Type.PLUS) >= 0 && typeLexeme.compareTo(Type.LN) <= 0) {
+                    while (!stack.isEmpty() && !stack.peek().equals("(") &&
+                            getType(stack.peek()).compareTo(Type.PLUS) >= 0 &&
+                            getPriority(typeLexeme).compareTo(getPriority(getType(stack.peek()))) <= 0) {
+                        rpnExpression.append(stack.pop()).append(" ");
+                    }
+                    stack.push(token);
                 }
-            } else if (typeLexeme.equals(Type.POW)) {
-                result.push(token);
             }
         }
 
-        while (!result.isEmpty()) {
-            rpnExpression.append(result.pop()).append(" ");
+        while (!stack.isEmpty()) {
+            if (stack.peek().equals("(") || stack.peek().equals(")")) {
+                throw new IllegalArgumentException("Mismatched parentheses in expression");
+            }
+            rpnExpression.append(stack.pop()).append(" ");
         }
 
         System.out.println("RPN Expression: " + rpnExpression);
 
         return rpnExpression.toString();
     }
+
+
 
     private Type getType(String token) {
         switch (token) {
@@ -117,14 +133,12 @@ public class ReversePolishNotation {
             case "ln": return Type.LN;
             case "x": return Type.X;
             case ".": return Type.DOT;
-            case ")": return Type.CLOSE_BRACKET;
-            case "(": return Type.OPEN_BRACKET;
             default: return Type.NUMBER;
         }
     }
 
     private Priority getPriority(Type typeToken) {
-        Priority priority = null;
+        Priority priority = null; // Инициализация переменной
         if (typeToken.equals(Type.PLUS) || typeToken.equals(Type.MINUS)) {
             priority = Priority.LOW;
         } else if (typeToken.equals(Type.DIV) || typeToken.equals(Type.MULT) || typeToken.equals(Type.MOD)) {
@@ -136,12 +150,13 @@ public class ReversePolishNotation {
         } else if (typeToken.compareTo(Type.COS) >= 0 && typeToken.compareTo(Type.LN) <= 0 && (typeToken != Type.UPLUS && typeToken != Type.UMINUS)) {
             priority = Priority.VVHIGH;
         }
-        return priority;
+        return priority != null ? priority : Priority.LOW;
     }
+
 
     public double calculateRPN(String rpnExpression) {
         String[] tokens = rpnExpression.trim().split(" ");
-        numbers = new Stack<>();
+        numbers = new Stack<>(); // Инициализация стека
 
         for (String token : tokens) {
             if (Character.isDigit(token.charAt(0))) {
@@ -158,6 +173,7 @@ public class ReversePolishNotation {
 
         return numbers.pop();
     }
+
 
     private double applyOperator(String operator, double operand1, double operand2) {
         switch (operator) {
