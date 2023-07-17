@@ -166,8 +166,7 @@ public class ReversePolishNotation {
             } else {
                 double operand2 = numbers.pop();
                 double operand1 = numbers.pop();
-                double result = applyOperator(token, operand1, operand2);
-                numbers.push(result);
+                numbers.push(applyOperator(token, operand1, operand2));
             }
         }
 
