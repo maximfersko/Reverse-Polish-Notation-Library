@@ -1,9 +1,8 @@
-import java.util.*;
+import java.util.Arrays;
+import java.util.Stack;
 
 public class ReversePolishNotation {
     Stack<Double> numbers;
-    Stack<String> result;
-
     String expression;
     double x;
 
@@ -56,19 +55,20 @@ public class ReversePolishNotation {
 
     private String getReversePolishNotation() {
         String[] tokens = expression.split("(?=[-+*/^()])|(?<=[-+*/^()])");
-        tokens = Arrays.stream(tokens)
-                .map(String::trim)
-                .filter(token -> !token.isEmpty())
-                .toArray(String[]::new);
+        tokens = removeEmptyTokens(tokens);
         numbers = new Stack<>();
-        result = new Stack<>();
-
         StringBuilder rpnExpression = new StringBuilder();
         Stack<String> stack = new Stack<>();
+        boolean unaryOperatorExpected = true;
 
         for (String token : tokens) {
+            if (token.isEmpty()) {
+                continue;
+            }
+
             if (token.equals("(")) {
                 stack.push(token);
+                unaryOperatorExpected = true;
             } else if (token.equals(")")) {
                 while (!stack.isEmpty() && !stack.peek().equals("(")) {
                     rpnExpression.append(stack.pop()).append(" ");
@@ -78,15 +78,18 @@ public class ReversePolishNotation {
                 } else {
                     throw new IllegalArgumentException("Mismatched parentheses in expression");
                 }
+                unaryOperatorExpected = false;
             } else {
                 Type typeLexeme = getType(token);
                 if (typeLexeme.equals(Type.NUMBER) || typeLexeme.equals(Type.X)) {
                     rpnExpression.append(token).append(" ");
+                    unaryOperatorExpected = false;
                 } else if (typeLexeme.equals(Type.POW)) {
                     while (!stack.isEmpty() && getType(stack.peek()).compareTo(Type.POW) >= 0) {
                         rpnExpression.append(stack.pop()).append(" ");
                     }
                     stack.push(token);
+                    unaryOperatorExpected = true;
                 } else if (typeLexeme.compareTo(Type.PLUS) >= 0 && typeLexeme.compareTo(Type.LN) <= 0) {
                     while (!stack.isEmpty() && !stack.peek().equals("(") &&
                             getType(stack.peek()).compareTo(Type.PLUS) >= 0 &&
@@ -94,6 +97,14 @@ public class ReversePolishNotation {
                         rpnExpression.append(stack.pop()).append(" ");
                     }
                     stack.push(token);
+                    unaryOperatorExpected = true;
+                } else if (typeLexeme.equals(Type.UMINUS) || typeLexeme.equals(Type.UPLUS)) {
+                    if (unaryOperatorExpected) {
+                        stack.push(token);
+                    } else {
+                        throw new IllegalArgumentException("Invalid use of unary operator: " + token);
+                    }
+                    unaryOperatorExpected = true;
                 }
             }
         }
@@ -110,69 +121,49 @@ public class ReversePolishNotation {
         return rpnExpression.toString();
     }
 
-
-
-    private Type getType(String token) {
-        switch (token) {
-            case "+": return Type.PLUS;
-            case "-": return Type.MINUS;
-            case "*": return Type.MULT;
-            case "/": return Type.DIV;
-            case "^": return Type.POW;
-            case "mod": return Type.MOD;
-            case "cos": return Type.COS;
-            case "sin": return Type.SIN;
-            case "tan": return Type.TAN;
-            case "atan": return Type.ATAN;
-            case "acos": return Type.ACOS;
-            case "asin": return Type.ASIN;
-            case "sqrt": return Type.SQRT;
-            case "u+": return Type.UPLUS;
-            case "u-": return Type.UMINUS;
-            case "log": return Type.LOG;
-            case "ln": return Type.LN;
-            case "x": return Type.X;
-            case ".": return Type.DOT;
-            default: return Type.NUMBER;
-        }
-    }
-
-    private Priority getPriority(Type typeToken) {
-        Priority priority = null; // Инициализация переменной
-        if (typeToken.equals(Type.PLUS) || typeToken.equals(Type.MINUS)) {
-            priority = Priority.LOW;
-        } else if (typeToken.equals(Type.DIV) || typeToken.equals(Type.MULT) || typeToken.equals(Type.MOD)) {
-            priority = Priority.MID;
-        } else if (typeToken.equals(Type.POW)) {
-            priority = Priority.HIGH;
-        } else if (typeToken.equals(Type.UMINUS) || typeToken.equals(Type.UPLUS)) {
-            priority = Priority.VHIGH;
-        } else if (typeToken.compareTo(Type.COS) >= 0 && typeToken.compareTo(Type.LN) <= 0 && (typeToken != Type.UPLUS && typeToken != Type.UMINUS)) {
-            priority = Priority.VVHIGH;
-        }
-        return priority != null ? priority : Priority.LOW;
-    }
-
-
-    public double calculateRPN(String rpnExpression) {
+    private double calculateRPN(String rpnExpression) {
         String[] tokens = rpnExpression.trim().split(" ");
-        numbers = new Stack<>(); // Инициализация стека
+        numbers = new Stack<>();
 
         for (String token : tokens) {
             if (Character.isDigit(token.charAt(0))) {
                 numbers.push(Double.parseDouble(token));
             } else if (token.equals("x")) {
                 numbers.push(x);
+            } else if (token.equals("u-")) {
+                if (numbers.isEmpty()) {
+                    throw new IllegalArgumentException("Not enough operands for unary minus operator");
+                }
+                double operand = numbers.pop();
+                numbers.push(-operand);
+            } else if (token.equals("u+")) {
             } else {
-                double operand2 = numbers.pop();
-                double operand1 = numbers.pop();
+                if (numbers.size() < 2 && !token.equals("-")) {
+                    throw new IllegalArgumentException("Not enough operands for operator: " + token);
+                }
+                double operand2;
+                double operand1;
+                if (numbers.isEmpty()) {
+                    operand2 = 0.0;
+                    operand1 = 0.0;
+                } else {
+                    operand2 = numbers.pop();
+                    if (numbers.isEmpty() && token.equals("-")) {
+                        operand1 = 0.0;
+                    } else {
+                        operand1 = numbers.pop();
+                    }
+                }
                 numbers.push(applyOperator(token, operand1, operand2));
             }
         }
 
+        if (numbers.size() != 1) {
+            throw new IllegalArgumentException("Invalid expression");
+        }
+
         return numbers.pop();
     }
-
 
     private double applyOperator(String operator, double operand1, double operand2) {
         switch (operator) {
@@ -188,12 +179,76 @@ public class ReversePolishNotation {
                 return Math.pow(operand1, operand2);
             case "mod":
                 return operand1 % operand2;
-            case "u+":
-                return operand2;
-            case "u-":
-                return -operand2;
             default:
                 throw new IllegalArgumentException("Invalid operator: " + operator);
         }
+    }
+
+    private Type getType(String token) {
+        switch (token) {
+            case "+":
+                return Type.PLUS;
+            case "-":
+                return Type.MINUS;
+            case "*":
+                return Type.MULT;
+            case "/":
+                return Type.DIV;
+            case "^":
+                return Type.POW;
+            case "mod":
+                return Type.MOD;
+            case "cos":
+                return Type.COS;
+            case "sin":
+                return Type.SIN;
+            case "tan":
+                return Type.TAN;
+            case "atan":
+                return Type.ATAN;
+            case "acos":
+                return Type.ACOS;
+            case "asin":
+                return Type.ASIN;
+            case "sqrt":
+                return Type.SQRT;
+            case "u+":
+                return Type.UPLUS;
+            case "u-":
+                return Type.UMINUS;
+            case "log":
+                return Type.LOG;
+            case "ln":
+                return Type.LN;
+            case "x":
+                return Type.X;
+            case ".":
+                return Type.DOT;
+            default:
+                return Type.NUMBER;
+        }
+    }
+
+    private Priority getPriority(Type typeToken) {
+        Priority priority = null;
+        if (typeToken.equals(Type.PLUS) || typeToken.equals(Type.MINUS)) {
+            priority = Priority.LOW;
+        } else if (typeToken.equals(Type.DIV) || typeToken.equals(Type.MULT) || typeToken.equals(Type.MOD)) {
+            priority = Priority.MID;
+        } else if (typeToken.equals(Type.POW)) {
+            priority = Priority.HIGH;
+        } else if (typeToken.equals(Type.UMINUS) || typeToken.equals(Type.UPLUS)) {
+            priority = Priority.VHIGH;
+        } else if (typeToken.compareTo(Type.COS) >= 0 && typeToken.compareTo(Type.LN) <= 0 && (typeToken != Type.UPLUS && typeToken != Type.UMINUS)) {
+            priority = Priority.VVHIGH;
+        }
+        return priority != null ? priority : Priority.LOW;
+    }
+
+    private String[] removeEmptyTokens(String[] tokens) {
+        return Arrays.stream(tokens)
+                .map(String::trim)
+                .filter(token -> !token.isEmpty())
+                .toArray(String[]::new);
     }
 }
