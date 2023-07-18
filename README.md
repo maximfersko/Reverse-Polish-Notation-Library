@@ -23,7 +23,7 @@ This command will compile the source code, run the tests, and package the librar
 
 ## Testing the Library
 
-    The RPN library includes a set of unit tests to ensure the correctness of its functionality. To run the tests, follow these steps:
+The RPN library includes a set of unit tests to ensure the correctness of its functionality. To run the tests, follow these steps:
 
 1. Ensure that you have built the project as described in the previous section.
 
@@ -36,7 +36,7 @@ mvn test
 ```
 Maven will execute the tests and provide the test results in the terminal.
 
-    Note: The tests use JUnit 3.8.2 for the assertions.
+Note: The tests use JUnit 3.8.2 for the assertions.
 
 ## Reverse Polish Notation Algorithm
 The Reverse Polish Notation (RPN) is a mathematical notation in which every operator follows all of its operands. The RPN algorithm eliminates the need for parentheses in mathematical expressions by representing them in postfix notation.
