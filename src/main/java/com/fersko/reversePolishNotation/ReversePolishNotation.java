@@ -1,5 +1,8 @@
+package com.fersko.reversePolishNotation;
+
 import java.util.Arrays;
 import java.util.Stack;
+import com.fersko.reversePolishNotation.ReversePolishNotation;
 
 public class ReversePolishNotation {
     Stack<Double> numbers;
@@ -115,8 +118,6 @@ public class ReversePolishNotation {
             }
             rpnExpression.append(stack.pop()).append(" ");
         }
-
-        System.out.println("RPN Expression: " + rpnExpression);
 
         return rpnExpression.toString();
     }
