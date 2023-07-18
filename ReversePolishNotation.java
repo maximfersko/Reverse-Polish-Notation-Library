@@ -130,31 +130,19 @@ public class ReversePolishNotation {
                 numbers.push(Double.parseDouble(token));
             } else if (token.equals("x")) {
                 numbers.push(x);
-            } else if (token.equals("u-")) {
+            } else if (isUnaryOperator(token)) {
                 if (numbers.isEmpty()) {
-                    throw new IllegalArgumentException("Not enough operands for unary minus operator");
+                    throw new IllegalArgumentException("Not enough operands for unary operator: " + token);
                 }
                 double operand = numbers.pop();
-                numbers.push(-operand);
-            } else if (token.equals("u+")) {
+                numbers.push(calculateUnary(token, operand));
             } else {
-                if (numbers.size() < 2 && !token.equals("-")) {
+                if (numbers.size() < 2) {
                     throw new IllegalArgumentException("Not enough operands for operator: " + token);
                 }
-                double operand2;
-                double operand1;
-                if (numbers.isEmpty()) {
-                    operand2 = 0.0;
-                    operand1 = 0.0;
-                } else {
-                    operand2 = numbers.pop();
-                    if (numbers.isEmpty() && token.equals("-")) {
-                        operand1 = 0.0;
-                    } else {
-                        operand1 = numbers.pop();
-                    }
-                }
-                numbers.push(applyOperator(token, operand1, operand2));
+                double operand2 = numbers.pop();
+                double operand1 = numbers.pop();
+                numbers.push(calculateBinary(token, operand1, operand2));
             }
         }
 
@@ -165,7 +153,19 @@ public class ReversePolishNotation {
         return numbers.pop();
     }
 
-    private double applyOperator(String operator, double operand1, double operand2) {
+
+    private boolean isUnaryOperator(String operator) {
+        return operator.equals("u+") || operator.equals("u-") || isMathFunction(operator);
+    }
+
+    private boolean isMathFunction(String operator) {
+        return operator.equals("cos") || operator.equals("sin") || operator.equals("tan")
+                || operator.equals("atan") || operator.equals("acos") || operator.equals("asin")
+                || operator.equals("sqrt") || operator.equals("log") || operator.equals("ln");
+    }
+
+
+    private double calculateBinary(String operator, double operand1, double operand2) {
         switch (operator) {
             case "+":
                 return operand1 + operand2;
@@ -183,6 +183,36 @@ public class ReversePolishNotation {
                 throw new IllegalArgumentException("Invalid operator: " + operator);
         }
     }
+
+    private double calculateUnary(String operator, double operand) {
+        switch (operator) {
+            case "u+":
+                return operand;
+            case "u-":
+                return -operand;
+            case "cos":
+                return Math.cos(operand);
+            case "sin":
+                return Math.sin(operand);
+            case "tan":
+                return Math.tan(operand);
+            case "atan":
+                return Math.atan(operand);
+            case "acos":
+                return Math.acos(operand);
+            case "asin":
+                return Math.asin(operand);
+            case "sqrt":
+                return Math.sqrt(operand);
+            case "log":
+                return Math.log10(operand);
+            case "ln":
+                return Math.log(operand);
+            default:
+                throw new IllegalArgumentException("Invalid operator: " + operator);
+        }
+    }
+
 
     private Type getType(String token) {
         switch (token) {
@@ -239,7 +269,8 @@ public class ReversePolishNotation {
             priority = Priority.HIGH;
         } else if (typeToken.equals(Type.UMINUS) || typeToken.equals(Type.UPLUS)) {
             priority = Priority.VHIGH;
-        } else if (typeToken.compareTo(Type.COS) >= 0 && typeToken.compareTo(Type.LN) <= 0 && (typeToken != Type.UPLUS && typeToken != Type.UMINUS)) {
+        } else if (typeToken.compareTo(Type.COS) >= 0 && typeToken.compareTo(Type.LN) <= 0
+                   && (typeToken != Type.UPLUS && typeToken != Type.UMINUS)) {
             priority = Priority.VVHIGH;
         }
         return priority != null ? priority : Priority.LOW;

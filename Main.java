@@ -5,5 +5,8 @@ public class Main {
         );
         System.out.println(reversePolishNotation.getResult());
         System.out.println(new ReversePolishNotation( "x + 6", 8).getResult());
+        System.out.println(new ReversePolishNotation( "cos(9)").getResult());
+        System.out.println(new ReversePolishNotation( "cos(9)").getResult());
+        System.out.println(new ReversePolishNotation( "8 * 23456 - ( ( ( ( ( ( ( ( ( ( 8 * ( 2 + 2 ) ) - 3 ) ) - 3 ) * 2 ) - 100 ) - 1 ) / 10 ) ) * 10 )").getResult());
     }
 }
