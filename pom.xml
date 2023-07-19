@@ -63,7 +63,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- Другие плагины Maven -->
         </plugins>
 
     </build>
