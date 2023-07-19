@@ -42,6 +42,10 @@ public class ReversePolishNotation {
         VVHIGH
     }
 
+    public ReversePolishNotation() {
+    }
+
+
     public ReversePolishNotation(String expression, double x) {
         this.expression = expression;
         this.x = x;
@@ -50,6 +54,15 @@ public class ReversePolishNotation {
     public ReversePolishNotation(String expression) {
         this.expression = expression;
         this.x = 0;
+    }
+
+    public void setExpression(String expression) {
+        this.expression = expression;
+    }
+
+    public void setExpression(String expression, double x) {
+        this.expression = expression;
+        this.x = x;
     }
 
     public double getResult() {
